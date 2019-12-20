@@ -1,0 +1,29 @@
+take
+只发射前面的N项数据
+使用take操作符可以更改observable的行为，只返回前面的N项数据，然后发射完成后通知，忽略剩余的数据。
+
+如果你对一个Observable使用 take(n) (或它的同义词 limit(n) )操作符，而那个 Observable发射的数据少于N项，
+那么 take 操作生成的Observable不会抛异常或发 射 onError 通知，在完成前它只会发射相同的少量数据。
+
+
+take(int) 默认不任何特定的调度器上执行。
+
+take(long,TimeUnit))
+take(long,TimeUnit,Scheduler))
+take 的这个变体接受一个时长而不是数量参数。它会丢发射Observable开始的那段时间发射 的数据，时长和时间单位通过参数指定。
+take 的这个变体默认在 computation 调度器上执行，但是你可以使用第三个参数指定其它的 调度器。
+
+
+
+过滤操作 这些操作符用于从Observable发射的数据中进行选择
+Debounce — 只有在空闲了一段时间后才发射数据，通俗的说，就是如果一段时间没有 操作，就执行一次操作
+Distinct — 去重，过滤掉重复数据项
+ElementAt — 取值，取特定位置的数据项
+Filter — 过滤，过滤掉没有通过谓词测试的数据项，只发射通过测试的
+First — 首项，只发射满足条件的第一条数据
+IgnoreElements — 忽略所有的数据，只保留终止通知(onError或onCompleted)
+Last — 末项，只发射最后一条数据
+Sample — 取样，定期发射最新的数据，等于是数据抽样，有的实现里叫ThrottleFirst Skip — 跳过前面的若干项数据
+SkipLast — 跳过后面的若干项数据
+Take — 只保留前面的若干项数据
+TakeLast — 只保留后面的若干项数据

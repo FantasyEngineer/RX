@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".combine.MergeActivity">
+
+
+    <Button
+        android:id="@+id/execute"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="execute" />
+
+    <TextView
+        android:id="@+id/tv_result_show"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TextView" />
+</LinearLayout>
