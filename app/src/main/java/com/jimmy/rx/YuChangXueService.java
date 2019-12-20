@@ -38,6 +38,7 @@ public class YuChangXueService extends AccessibilityService {
 
     private final String TAG = getClass().getName();
     private int videoNum = 0;
+    private int bookNum = 0;
 
     public static YuChangXueService mService;
     private Handler mHandler = new Handler() {
@@ -73,9 +74,38 @@ public class YuChangXueService extends AccessibilityService {
                         mHandler.sendEmptyMessageDelayed(0, 500);
                     }
                     break;
-                case 3:
-                    ToastUtils.showShort("点击中间的");
-                    ServiceUtils.performClickWithID(YuChangXueService.this, "cn.xuexi.android:id/home_bottom_tab_button_work");
+                case 3://学习文章
+                    ToastUtils.showShort("开始学习文章");
+                    if (isHome()) {
+                        ServiceUtils.performClickWithID(YuChangXueService.this, "cn.xuexi.android:id/home_bottom_tab_button_work");
+                        mHandler.sendEmptyMessageDelayed(4, 50);
+                    }
+                    break;
+
+                case 4://点击book
+                    if (isHome()) {
+                        bookNum++;
+                        dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条文章
+                    }
+                    mHandler.sendEmptyMessageDelayed(5, 5000);
+                    break;
+
+                case 5://book页面需要停留的时间
+                    if (!isHome()) {
+                        YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
+                    }
+                    //返回之后,要求在首页才会去触发滑动
+                    mHandler.sendEmptyMessageDelayed(6, 500);
+                    break;
+
+                case 6://首页去滑动文章页面
+                    if (isHome()) {
+                        Path path = new Path();
+                        path.moveTo(400, MainActivity.height / 2);
+                        path.lineTo(400, 0);
+                        dispatchGestureMove(path, 1000);
+                    }
+                    mHandler.sendEmptyMessageDelayed(4, 500);
                     break;
 
             }
