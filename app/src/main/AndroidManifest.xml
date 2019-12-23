@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.jimmy.rx">
+
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <!-- 辅助功能（自动点击） -->
+    <uses-permission
+        android:name="android.permission.BIND_ACCESSIBILITY_SERVICE"
+        tools:ignore="ProtectedPermissions" />
+
 
     <application
         android:allowBackup="true"
@@ -40,6 +48,20 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/ycxserviceinfo" />
 
+        </service>
+
+        <!-- 监听其他应用的顶层activity的service -->
+        <service
+            android:name=".WatchingAccessibilityService"
+            android:label="@string/accessibility_activity_class"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/watch_accessibility" />
         </service>
     </application>
 

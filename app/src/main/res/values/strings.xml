@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">RX</string>
     <string name="app_des">强国任务自动学习</string>
+    <string name="accessibility_activity_class">显示其他应用的栈顶activity</string>
+
 </resources>

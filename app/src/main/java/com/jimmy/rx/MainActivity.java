@@ -2,6 +2,8 @@ package com.jimmy.rx;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Path;
 import android.os.Build;
@@ -19,8 +21,10 @@ import com.jimmy.rx.creat.DeferActivity;
 import com.jimmy.rx.filter.TakeActivity;
 import com.jimmy.rx.rxview.RxViewActivity;
 import com.jimmy.rx.延时和轮询.TimeIntervalActivity;
+import com.jimmy.tool.ToastUtils;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -96,5 +100,30 @@ public class MainActivity extends BaseActivity {
             }
         }
 
+//        if (!isServiceRunning(MainActivity.this, WatchingService.class.getName())) {
+//            ToastUtils.showLong("开启检测窗口程序");
+//            startService(new Intent(MainActivity.this, WatchingService.class));
+//        }
+    }
+
+
+    /**
+     * 判断一个服务是否正在运行
+     *
+     * @param context
+     * @param serviceName
+     * @return
+     */
+    public static boolean isServiceRunning(Context context, String serviceName) {
+        boolean isRunning = false;
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> lists = am.getRunningServices(200);
+
+        for (ActivityManager.RunningServiceInfo info : lists) {//判断服务
+            if (info.service.getClassName().equals(serviceName)) {
+                isRunning = true;
+            }
+        }
+        return isRunning;
     }
 }

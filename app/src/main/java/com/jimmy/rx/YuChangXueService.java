@@ -1,6 +1,7 @@
 package com.jimmy.rx;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
 import android.graphics.Path;
 import android.os.Handler;
@@ -12,6 +13,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.jimmy.tool.ToastUtils;
 import com.jimmy.tool.Utils;
@@ -32,6 +34,9 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
+import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOWS_CHANGED;
+import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
+import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
 import static com.jimmy.rx.AbstractTF.isEmptyArray;
 
 public class YuChangXueService extends AccessibilityService {
@@ -48,6 +53,7 @@ public class YuChangXueService extends AccessibilityService {
                     if (isHome()) {
                         videoNum++;
                         dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条视频新闻
+                        ToastUtils.showLong("阅读第" + videoNum + "条视频");
                     }
                     mHandler.sendEmptyMessageDelayed(1, 5000);
                     break;
@@ -62,6 +68,7 @@ public class YuChangXueService extends AccessibilityService {
                 case 2://回到首页，滑动
                     Log.d("YuChangXueService", "videoNum:" + videoNum);
                     if (videoNum > 3) {
+                        ToastUtils.showLong("视频");
                         mHandler.sendEmptyMessageDelayed(3, 1000);
                         return;
                     } else {
@@ -75,7 +82,7 @@ public class YuChangXueService extends AccessibilityService {
                     }
                     break;
                 case 3://学习文章
-                    ToastUtils.showShort("开始学习文章");
+                    ToastUtils.showLong("开始学习文章");
                     if (isHome()) {
                         ServiceUtils.performClickWithID(YuChangXueService.this, "cn.xuexi.android:id/home_bottom_tab_button_work");
                         mHandler.sendEmptyMessageDelayed(4, 50);
@@ -86,8 +93,13 @@ public class YuChangXueService extends AccessibilityService {
                     if (isHome()) {
                         bookNum++;
                         dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条文章
+                        ToastUtils.showLong("阅读第" + bookNum + "条文章");
                     }
                     mHandler.sendEmptyMessageDelayed(5, 5000);
+                    break;
+                case 7:
+                    //模拟book文章的滑动
+
                     break;
 
                 case 5://book页面需要停留的时间
@@ -99,6 +111,11 @@ public class YuChangXueService extends AccessibilityService {
                     break;
 
                 case 6://首页去滑动文章页面
+                    Log.d("YuChangXueService", "bookNum:" + bookNum);
+                    if (bookNum >= 8) {
+                        ToastUtils.showLong("文章阅读完毕");
+                        return;
+                    }
                     if (isHome()) {
                         Path path = new Path();
                         path.moveTo(400, MainActivity.height / 2);
@@ -123,21 +140,27 @@ public class YuChangXueService extends AccessibilityService {
         super.onServiceConnected();
         ToastUtils.showShort("服务已经连接");
         mService = this;
+        AccessibilityServiceInfo serviceInfo = new AccessibilityServiceInfo();
+//        serviceInfo.eventTypes = TYPE_WINDOW_STATE_CHANGED;
+        serviceInfo.eventTypes = AccessibilityEvent.TYPES_ALL_MASK;
+        serviceInfo.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
+
+        serviceInfo.packageNames = new String[]{"cn.xuexi.android"};// 监控的app
+        serviceInfo.notificationTimeout = 100;
+        //设置可以监控webview
+        serviceInfo.flags = serviceInfo.flags | AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY;
+        setServiceInfo(serviceInfo);
+
+//        this.getServiceInfo().flags = AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY;
     }
 
 
     //实现辅助功能
     @Override
     public void onAccessibilityEvent(AccessibilityEvent accessibilityEvent) {
-
-//        AccessibilityNodeInfo biaoQingInfo = findFirst(AbstractTF.newContentDescription("表情", true));
-//        if (biaoQingInfo != null) {
-//            ToastUtils.showShort("找到我的文字");
-//            Log.e(TAG, "onAccessibilityEvent: 找到wx的表情图标");//可以查看日志
-//            biaoQingInfo.recycle();
-//        }
-
-//        Log.wtf(TAG, "onAccessibilityEvent : " + accessibilityEvent.toString());
+//        Log.d("YuChangXueService", "accessibilityEvent.getEventType():" + accessibilityEvent.getEventType());
+//        Log.d("YuChangXueService", "accessibilityEvent.getPackageName():" + accessibilityEvent.getPackageName());
+//        Log.d("YuChangXueService", "accessibilityEvent.getClassName():" + accessibilityEvent.getClassName());
         if (!canHome) {
             return;
         }
@@ -147,114 +170,13 @@ public class YuChangXueService extends AccessibilityService {
             canHome = false;
             ServiceUtils.performClickWithID(YuChangXueService.this, "cn.xuexi.android:id/home_bottom_tab_button_ding");
             mHandler.sendEmptyMessageDelayed(0, 500);
-//            Observable.timer(3, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
-//                    .subscribe(new Consumer<Long>() {
-//                        @Override
-//                        public void accept(Long aLong) throws Exception {
-////                            dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条视频新闻
-//                            dispatchGestureClick(400, MainActivity.height / 3 + 10);//模拟点击一条视频新闻
-//
-//                            bailing = Observable.intervalRange(1, 3, 0, 10, TimeUnit.SECONDS)
-//                                    .doOnSubscribe(new Consumer<Disposable>() {
-//                                        @Override
-//                                        public void accept(Disposable disposable) throws Exception {
-//                                            Log.d("YuChangXueService", "这里执行");
-//                                        }
-//                                    })
-//                                    .observeOn(AndroidSchedulers.mainThread()).flatMap(new Function<Long, ObservableSource<Long>>() {
-//                                        @Override
-//                                        public ObservableSource<Long> apply(Long o) throws Exception {
-////                                    if (o.longValue() > 3) {
-//////                                        bailing.dispose();
-//////                                    }
-//                                            //在播放视频界面，10s之后，触发返回
-//                                            if (!isHome()) {
-//                                                YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
-//                                            }
-//                                            //返回之后,要求在首页才会去触发滑动
-//                                            if (isHome()) {
-//                                                Observable.timer(1, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
-//                                                        .subscribe(new Consumer<Long>() {
-//                                                            @Override
-//                                                            public void accept(Long aLong) throws Exception {
-//                                                                Path path = new Path();
-//                                                                path.moveTo(400, MainActivity.height / 2);
-//                                                                path.lineTo(400, 70);
-//                                                                dispatchGestureMove(path, 1000);
-//                                                            }
-//                                                        });
-//                                            }
-//                                            return Observable.just(o).delay(2, TimeUnit.SECONDS);
-//                                        }
-//                                    }).observeOn(AndroidSchedulers.mainThread()).flatMap(new Function<Long, ObservableSource<?>>() {
-//                                        @Override
-//                                        public ObservableSource<?> apply(Long aLong) throws Exception {
-//                                            if (isHome()) {
-//                                                dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条视频新闻
-//                                            }
-//                                            return Observable.just(aLong);
-//                                        }
-//                                    }).toList().subscribe(new Consumer<List<Object>>() {
-//                                        @Override
-//                                        public void accept(List<Object> objects) throws Exception {
-//                                            Log.d("YuChangXueService", "去读书:");
-////                                    readBook();
-//                                        }
-//                                    });
-//                        }
-//                    });
         }
-    }
 
 
-    //阅读文章。
-    private void readBook() {
-        if (!isHome()) {
-            ToastUtils.showShort("不是在首页，阅读中断");
-        }
-        //阅读文章
-        ServiceUtils.performClickWithID(this, "cn.xuexi.android:id/home_bottom_tab_icon_group");
-        Observable.timer(3, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<Long>() {
-                    @Override
-                    public void accept(Long aLong) throws Exception {
-                        dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条文章
-                        dispatchGestureClick(400, MainActivity.height / 3 + 10);//模拟点击文章
-                        //然后观看视频轮询
-                        bailing1 = Observable.interval(10, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread()).flatMap(new Function<Long, ObservableSource<Long>>() {
-                            @Override
-                            public ObservableSource<Long> apply(Long o) throws Exception {
-                                if (o.longValue() > 3) {
-                                    bailing1.dispose();
-                                }
-                                //在播放视频界面，10s之后，触发返回
-                                YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
-                                //返回之后,要求在首页才会去触发滑动
-                                if (isHome()) {
-                                    Observable.timer(1, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
-                                            .subscribe(new Consumer<Long>() {
-                                                @Override
-                                                public void accept(Long aLong) throws Exception {
-                                                    Path path = new Path();
-                                                    path.moveTo(400, MainActivity.height / 2);
-                                                    path.lineTo(400, 70);
-                                                    dispatchGestureMove(path, 1000);
-                                                }
-                                            });
-                                }
-                                return Observable.just(o).delay(2, TimeUnit.SECONDS);
-                            }
-                        }).observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<Long>() {
-                            @Override
-                            public void accept(Long aLong) throws Exception {
-                                Log.d("YuChangXueService", "aLong:" + aLong);
-                                if (isHome()) {
-                                    dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条文章
-                                }
-                            }
-                        });
-                    }
-                });
+//        AccessibilityNodeInfo mNodeInfo = getRootInActiveWindow();
+
+
+//        AccessibilityNodeInfo mNodeInfo = accessibilityEvent.getSource();
 
     }
 
@@ -540,5 +462,15 @@ public class YuChangXueService extends AccessibilityService {
      */
     public boolean isHome() {
         return isViewExist("cn.xuexi.android:id/home_bottom_tab_button_ding") && isViewExist("cn.xuexi.android:id/home_bottom_tab_button_message");
+    }
+
+    /**
+     * 是否在应用内
+     *
+     * @param str
+     * @return
+     */
+    public boolean isInApp(String str) {
+        return str.equals("cn.xuexi.android");
     }
 }
