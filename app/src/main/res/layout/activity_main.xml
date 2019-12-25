@@ -4,23 +4,51 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="15dp"
+        android:text="@string/des"
+        android:textSize="18dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:text="
+软件需要开启悬浮框权限\n需要开启无障碍模式\n
+软件运行要求：安卓7.0以上"
+        android:textSize="18dp" />
 
     <Button
         android:id="@+id/conbine"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginRight="50dp"
+        android:background="@drawable/btn_bg"
         android:onClick="onClick"
-        android:text="测试手势功能" />
+        android:text="开始执行强国任务"
+        android:textColor="#ffffff"
+        android:textSize="20dp" />
 
     <Button
         android:id="@+id/btnCheckHome"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:onClick="onClick"
-        android:text="重新检测首页" />
+        android:text="重新检测首页"
+        android:visibility="gone" />
+
 
     <!--<Button-->
     <!--android:id="@+id/filter"-->

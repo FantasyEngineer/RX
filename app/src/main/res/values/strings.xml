@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">RX</string>
-    <string name="app_des">强国任务自动学习</string>
+    <string name="app_name">余昌雪专用</string>
+    <string name="app_des">强国任务自动学习，只能负责阅读视频和文章，分享，点赞，视听，问题需要自己回答</string>
     <string name="accessibility_activity_class">显示其他应用的栈顶activity</string>
+    <string name="des">开启当前app，请按照弹窗打开该权限\n点击下方按钮，开启无障碍服务下--服务下，点击#余昌雪专用--开启</string>
 
 </resources>

@@ -16,7 +16,10 @@ public class ServiceUtils {
         return list.get(0);
     }
 
-    private static AccessibilityNodeInfo findNodeInfoByText(AccessibilityNodeInfo nodeInfo, String text) {
+    public static AccessibilityNodeInfo findNodeInfoByText(AccessibilityNodeInfo nodeInfo, String text) {
+        if (nodeInfo == null) {
+            return null;
+        }
         List<AccessibilityNodeInfo> list = nodeInfo.findAccessibilityNodeInfosByText(text);
         if (list == null || list.isEmpty()) {
             return null;

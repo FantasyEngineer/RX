@@ -17,6 +17,7 @@ public class WatchingAccessibilityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         Log.d("WatchingAccessibilitySe", event.getPackageName() + "\n" + event.getClassName());
+
     }
 
     @Override
