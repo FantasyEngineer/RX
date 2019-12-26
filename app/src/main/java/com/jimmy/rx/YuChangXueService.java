@@ -19,6 +19,7 @@ import androidx.annotation.RequiresApi;
 
 import com.hjq.xtoast.OnClickListener;
 import com.hjq.xtoast.XToast;
+import com.jimmy.tool.SPUtils;
 import com.jimmy.tool.ToastUtils;
 import com.jimmy.tool.Utils;
 
@@ -42,9 +43,11 @@ public class YuChangXueService extends AccessibilityService {
 
 
     private long videoTime = 100 * 1000;
-    private int videoNumMax = 10;
+    private int videoNumMax = 12;
     private long bookTime = 60 * 1000;
     private int bookNumMax = 10;
+
+    private String BOOK_KEY = "bookkey";
 
 
     public static YuChangXueService mService;
@@ -78,9 +81,9 @@ public class YuChangXueService extends AccessibilityService {
                             Path path = new Path();
                             path.moveTo(400, MainActivity.height / 2);
                             path.lineTo(400, 0);
-                            dispatchGestureMove(path, 40);
+                            dispatchGestureMove(path, 200);
                         }
-                        mHandler.sendEmptyMessageDelayed(0, 500);
+                        mHandler.sendEmptyMessageDelayed(0, 1000);
                     }
                     break;
                 case 3://学习文章
@@ -100,14 +103,18 @@ public class YuChangXueService extends AccessibilityService {
                         collectNum++;
                         mHandler.sendEmptyMessageDelayed(7, 1500);//去收藏
                     }
-                    mHandler.sendEmptyMessageDelayed(11, 500);//视听
+                    mHandler.sendEmptyMessageDelayed(11, 1000);//视听
                     //去执行阅读
                     mHandler.sendEmptyMessageDelayed(5, bookTime);
                     show("第" + bookNum + "篇\n" + "阅读文章" + bookTime / 1000 + "秒\n请勿关闭", bookTime);
                     break;
                 case 7://点击收藏
+//                    if (webNode != null && webNode.getContentDescription() != null) {
+//                        Log.d("YuChangXueService", webNode.getContentDescription().toString());
+//                    }
                     clickCollect();
                     mHandler.sendEmptyMessageDelayed(8, 1000);
+
 //                    if (isCanClickCollect()) {
 //                        dispatchGestureClick(900, 1820);//模拟点击最右边的更多
 //                    }
@@ -149,14 +156,14 @@ public class YuChangXueService extends AccessibilityService {
                             Path path = new Path();
                             path.moveTo(800, MainActivity.height / 5 * 4);
                             path.lineTo(0, MainActivity.height / 5 * 4);
-                            dispatchGestureMove(path, 40);
+                            dispatchGestureMove(path, 50);
                         }
                     } else {
                         if (isHome()) {
                             Path path = new Path();
                             path.moveTo(400, MainActivity.height / 2);
                             path.lineTo(400, 0);
-                            dispatchGestureMove(path, 40);
+                            dispatchGestureMove(path, 200);
                         }
                     }
                     mHandler.sendEmptyMessageDelayed(4, 2000);
@@ -187,19 +194,30 @@ public class YuChangXueService extends AccessibilityService {
         serviceInfo.notificationTimeout = 100;
         //设置可以监控webview
         serviceInfo.flags = serviceInfo.flags | AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY;
+        final AccessibilityServiceInfo info = getServiceInfo();
+        info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY;
+
         setServiceInfo(serviceInfo);
 
-//        this.getServiceInfo().flags = AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY;
+//        //获取到webview的内容
+//        this.getServiceInfo().flags = serviceInfo.flags | AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY;
+
     }
 
+    AccessibilityEvent accessibilityEvent;
 
     //实现辅助功能
     @Override
     public void onAccessibilityEvent(AccessibilityEvent accessibilityEvent) {
+        this.accessibilityEvent = accessibilityEvent;
 //        Log.d("YuChangXueService", accessibilityEvent.getPackageName() + "\n" + accessibilityEvent.getClassName());
 //        Log.d("YuChangXueService", "accessibilityEvent.getEventType():" + accessibilityEvent.getEventType());
 //        Log.d("YuChangXueService", "accessibilityEvent.getPackageName():" + accessibilityEvent.getPackageName());
 //        Log.d("YuChangXueService", "accessibilityEvent.getClassName():" + accessibilityEvent.getClassName());
+
+        //每次进入页面都要去检查一下
+        getBookWebView(accessibilityEvent.getSource());
+
         if (!canHome) {
             return;
         }
@@ -211,82 +229,47 @@ public class YuChangXueService extends AccessibilityService {
             mHandler.sendEmptyMessageDelayed(0, 1000);
         }
 
-//        clickPlaySound();
 
-//
-//        AccessibilityNodeInfo uiContent = ServiceUtils.findNodeInfoByViewId(getRootInActiveWindow(), "cn.xuexi.android:id/ui_common_base_ui_activity_content");
-//        if (uiContent != null) {
-//            Log.d("YuChangXueService", "-------");
-//            Log.d("YuChangXueService", uiContent.getChild(1).toString());
+    }
 
 
-//            AccessibilityNodeInfo listView = viewpager.getChild(1);
-//            Log.d("YuChangXueService", "listView.getClassName():" + listView.getClassName());
-//            Log.d("YuChangXueService", "listView.getChildCount():" + listView.getChildCount());
-//            Log.d("YuChangXueService", "listView.getChild(0).toString():" + listView.getChild(0).toString());
-//            Log.d("YuChangXueService", "listView.getChild(1).toString():" + listView.getChild(1).toString());
-//            Log.d("YuChangXueService", "listView.getChild(2).toString():" + listView.getChild(2).toString());
-//            Log.d("YuChangXueService", "listView.getChild(3).toString():" + listView.getChild(3).toString());
-//            Log.d("YuChangXueService", "listView.getChild(4).toString():" + listView.getChild(4).toString());
-//            Log.d("YuChangXueService", "listView.getChild(5).toString():" + listView.getChild(5).toString());
-//
-//            if (listView.getChild(0) == null) {
-//                return;
-//            }
-//            if (listView.getChild(0).getChild(0) == null) {
-//                return;
-//            }
+    String contentDes = "";
+    AccessibilityNodeInfo webNode = null;
 
-//            listView.getChild(0).getChild(0).performAction(AccessibilityNodeInfo.ACTION_CLICK);
-
-//            for (int i = 0; i < listView.getChildCount(); i++) {
-//                Log.d("YuChangXueService", "i:" + i);
-//                Log.d("YuChangXueService", "listView.getChild(i):" + listView.getChild(i).getClassName());
-////                for (int j = 0; j < listView.getChild(0).getChildCount(); j++) {
-////                    Log.d("YuChangXueService", "listView.getChild(0).getChild(j).getClassName():" + listView.getChild(0).getChild(j).getClassName());
-////                }
-//
-////                if ("android.widget.ListView".equals(viewpager.getChild(i).getClassName())) {
-////                    Log.d("YuChangXueService", "i:" + i);
-////                    Log.d("YuChangXueService", "viewpager.getChild(i).getClassName():" + viewpager.getChild(i).getClassName());
-////                }
-//            }
-//        }
-
-//        List<AccessibilityNodeInfo> list = getRootInActiveWindow().findAccessibilityNodeInfosByText("欢迎发表你的观点");
-//        if (list == null) {
-//            Log.d("YuChangXueService", "这个是没找到");
-//            return;
-//        } else {
-//            Log.d("YuChangXueService", "找到啦");
-//        }
-
-
-//        for (AccessibilityNodeInfo item : list) {
-//            /**
-//             *  蚂蚁森林本身不可点击，但是他的父控件可以点击
-//             */
-//            AccessibilityNodeInfo parent = item.getParent();
-//            if (null != parent) {
-//                if (parent.getChild(2).equals("android.widget.ImageView")) {
-//                    if (parent.getChild(2).isClickable()) {
-//                       accessibilityNodeInfo.getParent().getChild(2)) parent.getChild(2).performAction(AccessibilityNodeInfo.ACTION_CLICK);
-//                        Log.d(TAG, "item = " + item.toString() + ", parent click = " + parent.toString());
-//                    }
-//                }
-//                break;
-//            }
-//        }
-
-
-//        dispatchGestureClick(980, 1820);//模拟点击最右边的更多
-
-
-//        AccessibilityNodeInfo mNodeInfo = getRootInActiveWindow();
-
-
-//        AccessibilityNodeInfo mNodeInfo = accessibilityEvent.getSource();
-
+    /**
+     * 遍历出webview
+     *
+     * @param source
+     */
+    public void getBookWebView(AccessibilityNodeInfo source) {
+        Log.d("YuChangXueService", "getBookWebView");
+        if (source == null) {
+            return;
+        }
+        if (source.getChildCount() > 0) {
+            for (int i = 0; i < source.getChildCount(); i++) {
+                if (source.getChild(i) != null) {
+                    if ("android.webkit.WebView".equals(source.getChild(i).getClassName())) {
+                        if (source.getChild(i) != null && source.getChild(i).getContentDescription() != null) {
+                            Log.d("YuChangXueService", "webNode.getContentDescription():" + source.getChild(i).getContentDescription());
+                        } else {
+                            getBookWebView(source.getChild(i));
+                        }
+//                        if (source.getChild(i) != null && source.getChild(i).getContentDescription() != null) {
+//                            contentDes = source.getChild(i).getContentDescription().toString();//把获得的webview的第一句话填充到全局
+//                            String s = SPUtils.getInstance().getString(BOOK_KEY, "1");
+//                            if (s.contains(source.getChild(i).getContentDescription())) {
+//                                return true;
+//                            }
+//                        } else {
+//                            bianlinode(source.getChild(i));
+//                        }
+                    }
+                } else {
+                    getBookWebView(source.getChild(i));
+                }
+            }
+        }
     }
 
     @Override
@@ -313,12 +296,13 @@ public class YuChangXueService extends AccessibilityService {
 
     //点击收藏
     public void clickCollect() {
+        Log.d("YuChangXueService", "点击收藏");
         AccessibilityNodeInfo accessibilityNodeInfo = ServiceUtils.findNodeInfoByText(this.getRootInActiveWindow(), "欢迎发表你的观点");
         if (accessibilityNodeInfo != null && accessibilityNodeInfo.getClassName().equals("android.widget.TextView")) {
-            Log.d("YuChangXueService", "找到了这个控件");
+//            Log.d("YuChangXueService", "找到了这个控件");
             AccessibilityNodeInfo parent = accessibilityNodeInfo.getParent();
             if (parent != null && parent.getChildCount() > 0 && parent.getChildCount() == 9) {
-                Log.d("YuChangXueService", "parent.getChildCount():" + parent.getChildCount());
+//                Log.d("YuChangXueService", "parent.getChildCount():" + parent.getChildCount());
 
                 for (int i = 0; i < parent.getChildCount(); i++) {
                     AccessibilityNodeInfo child = parent.getChild(i);
@@ -326,8 +310,8 @@ public class YuChangXueService extends AccessibilityService {
                         continue;
                     }
                     if (child.isClickable() && child.isEnabled() && "android.widget.ImageView".equals(child.getClassName())) {
-                        Log.d("YuChangXueService", "i:" + i);
-                        Log.d("YuChangXueService", "child.getClassName():" + child.getClassName());
+//                        Log.d("YuChangXueService", "i:" + i);
+//                        Log.d("YuChangXueService", "child.getClassName():" + child.getClassName());
                         switch (i) {
                             case 7://8为分享。7为收藏.(文章学习界面)，2为返回，4为分享
                                 parent.getChild(i).performAction(AccessibilityNodeInfo.ACTION_CLICK);//
@@ -342,6 +326,7 @@ public class YuChangXueService extends AccessibilityService {
 
     //点击分享按钮
     public void clickShare() {
+        Log.d("YuChangXueService", "点击分享按钮");
         AccessibilityNodeInfo accessibilityNodeInfo = ServiceUtils.findNodeInfoByText(this.getRootInActiveWindow(), "欢迎发表你的观点");
         if (accessibilityNodeInfo != null && accessibilityNodeInfo.getClassName().equals("android.widget.TextView")) {
             Log.d("YuChangXueService", "找到了这个控件");
@@ -371,6 +356,7 @@ public class YuChangXueService extends AccessibilityService {
 
     //点击分享强国
     public void clickWXshare() {
+        Log.d("YuChangXueService", "点击分享强国");
         AccessibilityNodeInfo accessibilityNodeInfo = ServiceUtils.findNodeInfoByViewId(this.getRootInActiveWindow(), "cn.xuexi.android:id/img_gv_item");
         accessibilityNodeInfo.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
         mHandler.sendEmptyMessageDelayed(10, 500);//500毫秒后，自动返回
@@ -381,6 +367,7 @@ public class YuChangXueService extends AccessibilityService {
 
     //点击视听
     private void clickSound() {
+        Log.d("YuChangXueService", "播放语音");
         AccessibilityNodeInfo accessibilityNodeInfo = ServiceUtils.findNodeInfoByText(this.getRootInActiveWindow(), "欢迎发表你的观点");
         if (accessibilityNodeInfo != null && accessibilityNodeInfo.getClassName().equals("android.widget.TextView")) {
             Log.d("YuChangXueService", "找到了这个控件");
@@ -508,4 +495,6 @@ public class YuChangXueService extends AccessibilityService {
         collectNum = 0;
         YuChangXueService.canHome = true;
     }
+
+
 }
