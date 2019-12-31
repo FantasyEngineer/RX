@@ -9,33 +9,27 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
-import com.hjq.xtoast.OnClickListener;
 import com.hjq.xtoast.XToast;
-import com.jimmy.tool.SPUtils;
 import com.jimmy.tool.ToastUtils;
 import com.jimmy.tool.Utils;
 
-import java.security.InvalidParameterException;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import io.reactivex.disposables.Disposable;
-
 import static com.jimmy.rx.AbstractTF.isEmptyArray;
-import static com.jimmy.rx.AbstractTF.newId;
 
+
+/**
+ * 电视台观看视频的时候，是不会有点阅号的。
+ * 阅读文章的时候要特别关注，是不是会有。
+ */
 public class YuChangXueService extends AccessibilityService {
     LinkedList linkedList = new LinkedList();//用来存放当天视频主题，文章主题。防止看重复
 
@@ -53,10 +47,10 @@ public class YuChangXueService extends AccessibilityService {
 //    private long bookTime = 100 * 1000;
 //    private int bookNumMax = 12;
 
-    private long videoTime = 10 * 1000;
-    private int videoNumMax = 1;
-    private long bookTime = 10 * 1000;
-    private int bookNumMax = 10;
+    private long videoTime = 30 * 1000;
+    private int videoNumMax = 2;
+    private long bookTime = 20 * 1000;
+    private int bookNumMax = 1;
 
     private String BOOK_KEY = "bookkey";
 
@@ -74,6 +68,7 @@ public class YuChangXueService extends AccessibilityService {
                         dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条视频新闻
                         isSearWebView = true;
                         mHandler.sendEmptyMessageDelayed(1, videoTime);
+                        mHandler.sendEmptyMessageDelayed(12, 8000);//8秒后检测，是否处在视频详情页面
                         updateShow("第" + videoNum + "条视频,正在观看" + videoTime / 1000 + "秒,请勿关闭");
                     } else {
                         updateShow("检测当前非首页，请返回首页");
@@ -83,17 +78,31 @@ public class YuChangXueService extends AccessibilityService {
                     break;
                 case 1://播放视频界面停留之后，点击返回
                     //在播放视频界面，10s之后，触发返回
-                    if (!isHome()) {
-                        isSearWebView = false;
-                        updateShow("全局检测，非主页视频界面返回");
-                        YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
-                        //返回之后,要求在首页才会去触发滑动
-                        mHandler.sendEmptyMessageDelayed(2, 500);
+                    if (isInApp(packageName)) {
+                        if (!isHome()) {
+                            isSearWebView = false;
+                            updateShow("全局检测，非主页视频界面返回" + isPingLun());
+                            YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
+                            //返回之后,要求在首页才会去触发滑动
+                            mHandler.sendEmptyMessageDelayed(2, 500);
+                        } else {
+                            updateShow("检测当前页面处在首页，前一次视频播放失败");
+                            mHandler.sendEmptyMessageDelayed(2, 500);
+                        }
                     } else {
-                        mHandler.sendEmptyMessageDelayed(1, 2000);
-                        updateShow("检测当前页面非视频页面，请自动点击至视频播放页面，2s后重新检测");
+                        updateShow("检测<学习强国>非前台运行，请将应用打开");
+                        mHandler.sendEmptyMessageDelayed(1, 1000);
                     }
-
+                    break;
+                case 12://检测是否处在视频播放界面
+                    if (isPingLun()) {
+                        updateShow("检测：当前处在视频播放界面，执行观看等待…………");
+                    } else {
+                        updateShow("检测：当前处在非视频播放界面！！！！");
+                        mHandler.removeMessages(1);//停掉视频观看
+                        videoNum--;
+                        mHandler.sendEmptyMessageDelayed(1, 500);
+                    }
                     break;
                 case 2://回到首页，滑动
                     if (videoNum >= videoNumMax) {
@@ -106,7 +115,7 @@ public class YuChangXueService extends AccessibilityService {
                             Path path = new Path();
                             path.moveTo(400, MainActivity.height / 2);
                             path.lineTo(400, 0);
-                            dispatchGestureMove(path, 200);
+                            dispatchGestureMove(path, 20);
                             mHandler.sendEmptyMessageDelayed(0, 1000);
                         } else {
                             updateShow("未检测到首页，请自动恢复页面到软件首页");
@@ -120,7 +129,7 @@ public class YuChangXueService extends AccessibilityService {
                         ServiceUtils.performClickWithID(YuChangXueService.this, Wenzhang);
                         mHandler.sendEmptyMessageDelayed(4, 500);
                     } else {
-                        updateShow("未检测到首页，请自动恢复页面到软件首页");
+                        updateShow("未检测到首页，请自动恢复《学习强国》至首页");
                         mHandler.sendEmptyMessageDelayed(3, 1000);
                     }
                     break;
@@ -131,22 +140,25 @@ public class YuChangXueService extends AccessibilityService {
                         updateShow("点击文章");
                         dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条文章
                         isSearWebView = true;
+                        if (collectNum < 4) {//去收藏
+                            updateShow("收藏数量小于4，需要收藏");
+                            collectNum++;
+                            mHandler.sendEmptyMessageDelayed(7, 2000);//去收藏
+                        }
+                        mHandler.sendEmptyMessageDelayed(11, 1000);//视听
+                        //去执行阅读
+                        mHandler.sendEmptyMessageDelayed(5, bookTime);
+                        updateShow("第" + bookNum + "篇," + "阅读文章" + bookTime / 1000 + "秒，请勿关闭");
+                    } else {
+                        updateShow("未检测到首页，请自动恢复《学习强国》至首页");
+                        mHandler.sendEmptyMessageDelayed(4, 1000);
                     }
-                    if (collectNum < 4) {//去收藏
-                        updateShow("收藏数量小于4，需要收藏");
-                        collectNum++;
-                        mHandler.sendEmptyMessageDelayed(7, 2000);//去收藏
-                    }
-                    mHandler.sendEmptyMessageDelayed(11, 1000);//视听
-                    //去执行阅读
-                    mHandler.sendEmptyMessageDelayed(5, bookTime);
-                    updateShow("第" + bookNum + "篇," + "阅读文章" + bookTime / 1000 + "秒，请勿关闭");
+
                     break;
                 case 7://点击收藏
 //                    if (webNode != null && webNode.getContentDescription() != null) {
 //                        Log.d("YuChangXueService", webNode.getContentDescription().toString());
 //                    }
-                    updateShow("点击收藏");
                     clickCollect();
                     mHandler.sendEmptyMessageDelayed(8, 1000);
 //                    if (isCanClickCollect()) {
@@ -229,7 +241,7 @@ public class YuChangXueService extends AccessibilityService {
         serviceInfo.eventTypes = AccessibilityEvent.TYPES_ALL_MASK;
         serviceInfo.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
 
-        serviceInfo.packageNames = new String[]{"cn.xuexi.android"};// 监控的app
+        serviceInfo.packageNames = new String[]{"cn.xuexi.android", "com.android.systemui"};// 监控的app
         serviceInfo.notificationTimeout = 100;
         //设置可以监控webview
         serviceInfo.flags = serviceInfo.flags | AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY;
@@ -241,6 +253,7 @@ public class YuChangXueService extends AccessibilityService {
     }
 
     AccessibilityEvent accessibilityEvent;
+    String packageName = "";
 
     //实现辅助功能
     @Override
@@ -248,13 +261,14 @@ public class YuChangXueService extends AccessibilityService {
         this.accessibilityEvent = accessibilityEvent;
 //        Log.d("YuChangXueService", accessibilityEvent.getPackageName() + "\n" + accessibilityEvent.getClassName());
 //        Log.d("YuChangXueService", "accessibilityEvent.getEventType():" + accessibilityEvent.getEventType());
+        packageName = accessibilityEvent.getPackageName().toString();
 //        Log.d("YuChangXueService", "accessibilityEvent.getPackageName():" + accessibilityEvent.getPackageName());
 //        Log.d("YuChangXueService", "accessibilityEvent.getClassName():" + accessibilityEvent.getClassName());
 
         //每次进入页面都要去检查一下
-        if (isSearWebView) {
-            getBookWebView(accessibilityEvent.getSource());
-        }
+//        if (isSearWebView) {
+//            getBookWebView(accessibilityEvent.getSource());
+//        }
 
         if (!canHome) {
             return;
@@ -266,10 +280,9 @@ public class YuChangXueService extends AccessibilityService {
 //            ToastUtils.showShort("当前处在首页");//只有在首页才能进行下面的操作
             //点击电视台
             canHome = false;
+            updateShow("发现处于首页，请等待2秒自动操作！！！！！！！！！");
             ServiceUtils.performClickWithID(YuChangXueService.this, Dianshitai);
             mHandler.sendEmptyMessageDelayed(0, 2000);
-        } else {
-            updateShow("请打开学习强国，使学习强国处在首页");
         }
 
     }
@@ -294,6 +307,7 @@ public class YuChangXueService extends AccessibilityService {
                     if ("android.webkit.WebView".equals(source.getChild(i).getClassName())) {
                         if (source.getChild(i) != null && source.getChild(i).getContentDescription() != null) {
                             linkedList.add(source.getChild(i).getContentDescription());
+//                            updateShow(source.getChild(i).getContentDescription().toString());
                             Log.d("YuChangXueService", "webNode.getContentDescription():" + source.getChild(i).getContentDescription());
                         } else {
                             getBookWebView(source.getChild(i));
@@ -333,9 +347,12 @@ public class YuChangXueService extends AccessibilityService {
         AccessibilityNodeInfo accessibilityNodeInfo = ServiceUtils.findNodeInfoByText(this.getRootInActiveWindow(), "欢迎发表你的观点");
         if (accessibilityNodeInfo != null && accessibilityNodeInfo.getClassName().equals("android.widget.TextView")) {
 //            Log.d("YuChangXueService", "找到了这个控件");
+            updateShow("查询到EditText控件");
             AccessibilityNodeInfo parent = accessibilityNodeInfo.getParent();
             if (parent != null && parent.getChildCount() > 0 && parent.getChildCount() == 9) {
 //                Log.d("YuChangXueService", "parent.getChildCount():" + parent.getChildCount());
+                updateShow("查询到收藏ImageView控件");
+                updateShow("Click 收藏的ImageView控件");
                 parent.getChild(7).performAction(AccessibilityNodeInfo.ACTION_CLICK);//
 //                for (int i = 0; i < parent.getChildCount(); i++) {
 //                    AccessibilityNodeInfo child = parent.getChild(i);
@@ -353,6 +370,8 @@ public class YuChangXueService extends AccessibilityService {
 //                    }
 //                }
             }
+        } else {
+            updateShow("未查询到EditText控件");
         }
     }
 
@@ -483,6 +502,18 @@ public class YuChangXueService extends AccessibilityService {
         return false;
     }
 
+    /**
+     * 是否处于视频的评论以及文章的评论页面
+     *
+     * @return
+     */
+    public boolean isPingLun() {
+        AccessibilityNodeInfo accessibilityNodeInfo = ServiceUtils.findNodeInfoByText(this.getRootInActiveWindow(), "欢迎发表你的观点");
+        if (accessibilityNodeInfo != null && accessibilityNodeInfo.getClassName().equals("android.widget.TextView")) {
+            return true;
+        }
+        return false;
+    }
 
     /**
      * 判断是否在首页
@@ -511,6 +542,9 @@ public class YuChangXueService extends AccessibilityService {
     public static boolean isShow = false;
 
     public void show() {
+        if (t != null) {
+            t.cancel();
+        }
         isShow = true;
         t = new XToast(Utils.getApp())
                 .setView(R.layout.toast)
@@ -521,7 +555,8 @@ public class YuChangXueService extends AccessibilityService {
                 .setDuration(5000 * 1000)
                 // 设置动画样式
                 .setAnimStyle(android.R.style.Animation_Translucent)
-                .setText(R.id.tv_toast, "开启学习辅助，目标学习12个视频，12个文章")
+                .setText(R.id.tv_toast, "========开启学习辅助========\n目标学习" + videoNumMax + "个视频，每个视频花费时长"
+                        + videoTime / 1000 + "秒" + ";\n目的学习" + bookNumMax + "个文章，每个文章花费" + bookTime / 1000 + "秒")
 //                .setOnClickListener(R.id.tv_toast, new OnClickListener<TextView>() {
 //
 //                    @Override
@@ -534,13 +569,15 @@ public class YuChangXueService extends AccessibilityService {
 //                    }
 //                })
                 .show();
+
+        updateShow("请打开学习强国，使学习强国处在首页");
     }
 
     public void updateShow(String mes) {
         TextView textView = (TextView) t.findViewById(R.id.tv_toast);
         ScrollView scrollView = (ScrollView) t.findViewById(R.id.scrollView);
         textView.setText(textView.getText().toString() + "\n" + mes);
-        scrollView.smoothScrollBy(100, 100);
+        scrollView.smoothScrollBy(0, 500);
     }
 
 

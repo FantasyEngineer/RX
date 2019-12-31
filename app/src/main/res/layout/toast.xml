@@ -2,15 +2,15 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#88000000"
-    android:gravity="center_horizontal"
+    android:background="#cc000000"
+    android:gravity="center"
     android:orientation="vertical">
 
 
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="500dp"
         android:padding="15dp">
 
         <TextView
@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="left"
-            android:textColor="#ffffff"
+            android:textColor="@android:color/white"
             android:textSize="13dp" />
     </ScrollView>
 </LinearLayout>
