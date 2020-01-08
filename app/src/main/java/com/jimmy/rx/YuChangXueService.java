@@ -22,6 +22,13 @@ import com.jimmy.tool.Utils;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 
 import static com.jimmy.rx.AbstractTF.isEmptyArray;
 
@@ -40,15 +47,16 @@ public class YuChangXueService extends AccessibilityService {
     private String Dianshitai = "cn.xuexi.android:id/home_bottom_tab_button_contact";
     private String Bailing = "cn.xuexi.android:id/home_bottom_tab_button_ding";
     private String Wenzhang = "cn.xuexi.android:id/home_bottom_tab_button_work";
+    private String score = "cn.xuexi.android:id/comm_head_xuexi_score";
 
 
 //    private long videoTime = 120 * 1000;
 //    private int videoNumMax = 12;
-//    private long bookTime = 100 * 1000;
+//    private long bookTime = 120 * 1000;
 //    private int bookNumMax = 12;
 
-    private long videoTime = 30 * 1000;
-    private int videoNumMax = 2;
+    private long videoTime = 20 * 1000;
+    private int videoNumMax = 1;
     private long bookTime = 20 * 1000;
     private int bookNumMax = 1;
 
@@ -62,48 +70,48 @@ public class YuChangXueService extends AccessibilityService {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case 0://模拟点击视屏
-                    if (isHome()) {
-                        videoNum++;
-                        updateShow("点击视频,视频数增加");
-                        dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条视频新闻
-                        isSearWebView = true;
-                        mHandler.sendEmptyMessageDelayed(1, videoTime);
-                        mHandler.sendEmptyMessageDelayed(12, 8000);//8秒后检测，是否处在视频详情页面
-                        updateShow("第" + videoNum + "条视频,正在观看" + videoTime / 1000 + "秒,请勿关闭");
-                    } else {
-                        updateShow("检测当前非首页，请返回首页");
-                        ServiceUtils.performClickWithID(YuChangXueService.this, Dianshitai);
-                        mHandler.sendEmptyMessageDelayed(0, 2000);
-                    }
+//                    if (isHome()) {
+                    videoNum++;
+                    updateShow("点击视频,视频数增加");
+                    dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条视频新闻
+                    isSearWebView = true;
+                    mHandler.sendEmptyMessageDelayed(1, videoTime);
+//                        mHandler.sendEmptyMessageDelayed(12, 8000);//8秒后检测，是否处在视频详情页面
+                    updateShow("第" + videoNum + "条视频,正在观看" + videoTime / 1000 + "秒,请勿关闭");
+//                    } else {
+//                        updateShow("检测当前非首页，请返回首页");
+//                        ServiceUtils.performClickWithID(YuChangXueService.this, Dianshitai);
+//                        mHandler.sendEmptyMessageDelayed(0, 2000);
+//                    }
                     break;
                 case 1://播放视频界面停留之后，点击返回
                     //在播放视频界面，10s之后，触发返回
-                    if (isInApp(packageName)) {
-                        if (!isHome()) {
-                            isSearWebView = false;
-                            updateShow("全局检测，非主页视频界面返回" + isPingLun());
-                            YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
-                            //返回之后,要求在首页才会去触发滑动
-                            mHandler.sendEmptyMessageDelayed(2, 500);
-                        } else {
-                            updateShow("检测当前页面处在首页，前一次视频播放失败");
-                            mHandler.sendEmptyMessageDelayed(2, 500);
-                        }
+//                    if (isInApp(packageName)) {
+                    if (!isHome()) {
+                        isSearWebView = false;
+                        updateShow("全局检测，非主页视频界面返回" + isPingLun());
+                        YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
+                        //返回之后,要求在首页才会去触发滑动
+                        mHandler.sendEmptyMessageDelayed(2, 500);
                     } else {
-                        updateShow("检测<学习强国>非前台运行，请将应用打开");
-                        mHandler.sendEmptyMessageDelayed(1, 1000);
+                        updateShow("检测当前页面处在首页，前一次视频播放失败");
+                        mHandler.sendEmptyMessageDelayed(2, 500);
                     }
+//                    } else {
+//                        updateShow("检测<学习强国>非前台运行，请将应用打开");
+//                        mHandler.sendEmptyMessageDelayed(1, 1000);
+//                    }
                     break;
-                case 12://检测是否处在视频播放界面
-                    if (isPingLun()) {
-                        updateShow("检测：当前处在视频播放界面，执行观看等待…………");
-                    } else {
-                        updateShow("检测：当前处在非视频播放界面！！！！");
-                        mHandler.removeMessages(1);//停掉视频观看
-                        videoNum--;
-                        mHandler.sendEmptyMessageDelayed(1, 500);
-                    }
-                    break;
+//                case 12://检测是否处在视频播放界面
+//                    if (isPingLun()) {
+//                        updateShow("检测：当前处在视频播放界面，执行观看等待…………");
+//                    } else {
+//                        updateShow("检测：当前处在非视频播放界面！！！！");
+//                        mHandler.removeMessages(1);//停掉视频观看
+//                        videoNum--;
+//                        mHandler.sendEmptyMessageDelayed(1, 500);
+//                    }
+//                    break;
                 case 2://回到首页，滑动
                     if (videoNum >= videoNumMax) {
                         updateShow("设定的视频数量，已经播放完毕");
@@ -115,8 +123,8 @@ public class YuChangXueService extends AccessibilityService {
                             Path path = new Path();
                             path.moveTo(400, MainActivity.height / 2);
                             path.lineTo(400, 0);
-                            dispatchGestureMove(path, 20);
-                            mHandler.sendEmptyMessageDelayed(0, 1000);
+                            dispatchGestureMove(path, 40);
+                            mHandler.sendEmptyMessageDelayed(0, 2000);
                         } else {
                             updateShow("未检测到首页，请自动恢复页面到软件首页");
                             mHandler.sendEmptyMessageDelayed(2, 1000);
@@ -194,11 +202,8 @@ public class YuChangXueService extends AccessibilityService {
                     break;
                 case 6://首页去滑动文章页面
                     if (bookNum >= bookNumMax) {
-                        updateShow("全部任务执行完毕，准备关闭...");
-                        YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME);
-                        if (t != null) {
-                            t.cancel();
-                        }
+                        updateShow("文章阅读完毕，准备完成阅读本地频道任务");
+                        mHandler.sendEmptyMessageDelayed(995, 1000);
                         return;
                     }
 
@@ -221,8 +226,49 @@ public class YuChangXueService extends AccessibilityService {
                     }
                     mHandler.sendEmptyMessageDelayed(4, 2500);
                     break;
+                case 995://点击分数
+                    updateShow("点击分数，进入任务界面");
+                    ServiceUtils.performClickWithID(YuChangXueService.this, score);
+                    mHandler.sendEmptyMessageDelayed(999, 2000);
+                    break;
+                case 999://进入到分数界面之后，滑动到最下面
+                    updateShow("进入到页面，准备滑动到最底部");
+                    Path path = new Path();
+                    path.moveTo(400, MainActivity.height / 2 + 200);
+                    path.lineTo(400, 0);
+                    dispatchGestureMove(path, 20);
+                    mHandler.sendEmptyMessageDelayed(1000, 2000);
+                    break;
 
-
+                case 1000://点击本地频道,去看看按钮
+                    updateShow("点击本地频道去看看按钮");
+                    dispatchGestureClick(1050, 2130);
+                    mHandler.sendEmptyMessageDelayed(1001, 2000);
+                    break;
+                case 1001:
+                    if (isHome()) {
+                        updateShow("当前处在首页，点击本地频道文章，阅读文章");
+                        dispatchGestureClick(400, MainActivity.height / 3);//模拟点击一条本地文章
+                        mHandler.sendEmptyMessageDelayed(1002, bookTime);//查看时间，时间到达
+                    } else {
+                        updateShow("本地频道任务结束,返回首页");
+                        mHandler.sendEmptyMessageDelayed(1002, 1000);
+                    }
+                    break;
+                case 1002:
+                    if (!isHome()) {
+                        updateShow("返回，从本地任务页面返回");
+                        YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
+                    }
+                    updateShow("========关闭学习辅助========");
+                    updateShow("全部任务执行完毕，3秒准备关闭...");
+                    mHandler.sendEmptyMessageDelayed(1011, 3000);
+                case 1011:
+//                    YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME);
+                    if (t != null) {
+                        t.cancel();
+                    }
+                    break;
             }
         }
     };
@@ -259,7 +305,7 @@ public class YuChangXueService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent accessibilityEvent) {
         this.accessibilityEvent = accessibilityEvent;
-//        Log.d("YuChangXueService", accessibilityEvent.getPackageName() + "\n" + accessibilityEvent.getClassName());
+        Log.d("YuChangXueService", accessibilityEvent.getPackageName() + "\n" + accessibilityEvent.getClassName());
 //        Log.d("YuChangXueService", "accessibilityEvent.getEventType():" + accessibilityEvent.getEventType());
         packageName = accessibilityEvent.getPackageName().toString();
 //        Log.d("YuChangXueService", "accessibilityEvent.getPackageName():" + accessibilityEvent.getPackageName());
@@ -267,7 +313,7 @@ public class YuChangXueService extends AccessibilityService {
 
         //每次进入页面都要去检查一下
 //        if (isSearWebView) {
-//            getBookWebView(accessibilityEvent.getSource());
+//        getBookWebView(accessibilityEvent.getSource());
 //        }
 
         if (!canHome) {
@@ -275,11 +321,15 @@ public class YuChangXueService extends AccessibilityService {
         }
         if (!isShow) {
             show();//开启面板
+            //回到桌面
+            YuChangXueService.this.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME);
         }
         if (isHome()) {
 //            ToastUtils.showShort("当前处在首页");//只有在首页才能进行下面的操作
             //点击电视台
             canHome = false;
+            updateShow("发现处于首页，请等待2秒自动操作！！！！！！！！！");
+            updateShow("发现处于首页，请等待2秒自动操作！！！！！！！！！");
             updateShow("发现处于首页，请等待2秒自动操作！！！！！！！！！");
             ServiceUtils.performClickWithID(YuChangXueService.this, Dianshitai);
             mHandler.sendEmptyMessageDelayed(0, 2000);
@@ -298,19 +348,34 @@ public class YuChangXueService extends AccessibilityService {
      */
     public void getBookWebView(AccessibilityNodeInfo source) {
         Log.d("YuChangXueService", "getBookWebView");
+
         if (source == null) {
             return;
         }
+//        AccessibilityNodeInfo tiaozhanInfo = ServiceUtils.findNodeInfoByViewId(source, "cn.xuexi.android:id/webview_frame");
+//
+//        if (tiaozhanInfo != null) {
+//            Log.d("YuChangXueService", "tiaozhanInfo:" + tiaozhanInfo);
+//
+//            for (int i = 0; i < tiaozhanInfo.getChildCount(); i++) {
+//                Log.d("YuChangXueService", "tiaozhanInfo.getChild(i):" + tiaozhanInfo.getChild(i));
+//                Log.d("YuChangXueService", "tiaozhanInfo.getChild(i).getContentDescription():" + tiaozhanInfo.getChild(i).getContentDescription());
+//            }
+//        }
+
+
         if (source.getChildCount() > 0) {
             for (int i = 0; i < source.getChildCount(); i++) {
                 if (source.getChild(i) != null) {
                     if ("android.webkit.WebView".equals(source.getChild(i).getClassName())) {
-                        if (source.getChild(i) != null && source.getChild(i).getContentDescription() != null) {
-                            linkedList.add(source.getChild(i).getContentDescription());
-//                            updateShow(source.getChild(i).getContentDescription().toString());
-                            Log.d("YuChangXueService", "webNode.getContentDescription():" + source.getChild(i).getContentDescription());
-                        } else {
-                            getBookWebView(source.getChild(i));
+                        if ("com.uc.webview.export.WebView".equals(source.getChild(i).getClassName())) {
+                            if (source.getChild(i) != null && source.getChild(i).getContentDescription() != null) {
+                                linkedList.add(source.getChild(i).getContentDescription());
+                                updateShow(source.getChild(i).getContentDescription().toString());
+                                Log.d("YuChangXueService", "webNode.getContentDescription():" + source.getChild(i).getContentDescription());
+                            } else {
+                                getBookWebView(source.getChild(i));
+                            }
                         }
                     }
                 } else {
