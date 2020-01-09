@@ -50,15 +50,15 @@ public class YuChangXueService extends AccessibilityService {
     private String score = "cn.xuexi.android:id/comm_head_xuexi_score";
 
 
-//    private long videoTime = 120 * 1000;
-//    private int videoNumMax = 12;
-//    private long bookTime = 120 * 1000;
-//    private int bookNumMax = 12;
+    private long videoTime = 120 * 1000;
+    private int videoNumMax = 12;
+    private long bookTime = 120 * 1000;
+    private int bookNumMax = 12;
 
-    private long videoTime = 20 * 1000;
-    private int videoNumMax = 1;
-    private long bookTime = 20 * 1000;
-    private int bookNumMax = 1;
+//    private long videoTime = 20 * 1000;
+//    private int videoNumMax = 1;
+//    private long bookTime = 20 * 1000;
+//    private int bookNumMax = 1;
 
     private String BOOK_KEY = "bookkey";
 
